@@ -65,8 +65,15 @@
 
   (<!? (-assoc-in store ["schema"] (read-string (slurp "resources/schema.edn"))))
 
+  (<!? (-get-in store ["schema"]))
 
+  (read-string (slurp "resources/schema.edn"))
 
+  (into {}
+        (d/entity (d/db conn) (-> (d/q '[:find ?e
+                                         :where [?e :db/ident :bookmark/title]]
+                                          (d/db conn))
+                                     ffirst)))
 
 
   )

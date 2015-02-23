@@ -33,6 +33,16 @@
      (d/transact conn (-> "resources/schema.edn" slurp read-string))
      conn)
 
+   '(fn bookmarks->datoms [conn params]
+      (let [id (uuid params)
+            {:keys [title user url]} params]
+        (db-transact
+         conn
+         [{:bookmark/title title
+           :bookmark/url url
+           :bookmark/user user
+           :val/id id}])))
+
    })
 
 

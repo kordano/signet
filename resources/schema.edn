@@ -1,5 +1,5 @@
-;; bookmarks
-[{:db/id #db/id[:db.part/db]
+[;; --- bookmarks ---
+ {:db/id #db/id[:db.part/db]
   :db/ident :bookmark/title
   :db/valueType :db.type/string
   :db/cardinality :db.cardinality/one
@@ -16,4 +16,11 @@
   :db/ident :bookmark/user
   :db/valueType :db.type/string
   :db/cardinality :db.cardinality/many
-  :db.install/_attribute :db.part/db}]
+  :db.install/_attribute :db.part/db}
+ ;; --- repo refs ---
+ {:db/id #db/id[:db.part/db]
+  :db/ident :val/id
+  :db/valueType :db.type/uuid
+  :db/cardinality :db.cardinality/one
+  :db.install/_attribute :db.part/db}
+ ]

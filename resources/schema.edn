@@ -1,0 +1,19 @@
+;; bookmarks
+[{:db/id #db/id[:db.part/db]
+  :db/ident :bookmark/title
+  :db/valueType :db.type/string
+  :db/cardinality :db.cardinality/one
+  :db/fulltext true
+  :db/index true
+  :db.install/_attribute :db.part/db}
+ {:db/id #db/id[:db.part/db]
+  :db/ident :bookmark/url
+  :db/valueType :db.type/string
+  :db/cardinality :db.cardinality/one
+  :db/unique :db.unique/identity
+  :db.install/_attribute :db.part/db}
+ {:db/id #db/id[:db.part/db]
+  :db/ident :bookmark/user
+  :db/valueType :db.type/string
+  :db/cardinality :db.cardinality/many
+  :db.install/_attribute :db.part/db}]

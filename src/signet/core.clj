@@ -47,6 +47,14 @@
 
   (<!? (s/commit! stage {"kordano@topiq.es" {r-id #{"master"}}}))
 
+  (<!? (s/transact stage ["kordano@topiq.es" r-id "master"]
+                   [[(find-fn 'bookmarks->datoms)
+                     {:title "turing"
+                       :url "turing.com"
+                       :user "kordano@topiq.es"}]]))
+
+  (<!? (s/commit! stage {"kordano@topiq.es" {r-id #{"master"}}}))
+
   (<!? (s/branch! stage
                   ["kordano@topiq.es" r-id]
                   "Some bookmarks"
@@ -59,6 +67,7 @@
   (defn load-key [id]
     (<!? (-get-in store [id])))
 
+  ;; this needs a moment, datomic has to be initialized
   (def conn (<!? (s/branch-value store mapped-eval
                                  (get-in @stage ["kordano@topiq.es" r-id])
                                  "Some bookmarks")))
@@ -67,13 +76,10 @@
 
   (<!? (-get-in store ["schema"]))
 
-  (read-string (slurp "resources/schema.edn"))
-
-  (into {}
-        (d/entity (d/db conn) (-> (d/q '[:find ?e
-                                         :where [?e :db/ident :bookmark/title]]
-                                          (d/db conn))
-                                     ffirst)))
-
+  (d/q '[:find ?e ?u ?t
+         :where
+         [?e :bookmark/title ?t]
+         [?e :bookmark/url ?u]]
+       (d/db conn))
 
   )

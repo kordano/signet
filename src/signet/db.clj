@@ -41,7 +41,9 @@
          [{:bookmark/title title
            :bookmark/url url
            :bookmark/user user
-           :val/id id}])))
+           :val/id id}]))
+      conn)
+
    (fn [conn params]
       (let [id (uuid params)
             {:keys [title user url]} params]
@@ -50,8 +52,8 @@
          [{:bookmark/title title
            :bookmark/url url
            :bookmark/user user
-           :val/id id}])))
-   })
+           :val/id id}]))
+      conn)})
 
 
 (defn mapped-eval [code]

@@ -11,13 +11,50 @@
             [geschichte.p2p.fetch :refer [fetch]]
             [geschichte.p2p.block-detector :refer [block-detector]]
             [signet.db :refer :all]
+            [org.httpkit.server :refer [with-channel on-receive on-close run-server send!]]
+            [clojure.java.io :as io]
+            [compojure.route :refer [resources]]
+            [compojure.core :refer [GET POST defroutes]]
+            [compojure.handler :refer [site api]]
             [clojure.core.async :refer [>!! <!!]]
             [aprint.core :refer [aprint]]
             [datomic.api :as d]))
 
 (timbre/refer-timbre)
 
+(defn dispatch-request
+  "Dispatch incoming requests"
+  [{:keys [topic data]}]
+  (case topic
+    :graph 42
+    :unrelated))
+
+
+(defn ws-handler
+  "Handle incoming websocket requests"
+  [request]
+  (with-channel request channel
+    (on-close channel (fn [msg] (info " - CONN - " channel " closed!")))
+    (on-receive channel (fn [msg]
+                          (send! channel (pr-str (dispatch-request (read-string msg))))))))
+
+
+(defroutes handler
+  (resources "/")
+  (GET "/data/ws" [] ws-handler)
+  (GET "/*" [] (io/resource "public/index.html")))
+
+
+(defn -main [& args]
+  (info "Starting Server ...")
+  (run-server (site #'handler) {:port 8091 :join? false})
+  (info "done")
+  (info  "Visit http://localhost:8091"))
+
+
+
 (comment
+  (run-server (site #'handler) {:port 8091 :join? false})
 
   (def store (<!? (new-mem-store)))
 
@@ -66,10 +103,13 @@
                                  (get-in @stage ["kordano@topiq.es" r-id])
                                  "Some bookmarks")))
 
+  (get-in @stage ["kordano@topiq.es" r-id :state :causal-order])
+
   (d/q '[:find ?e ?u ?t
          :where
          [?e :bookmark/title ?t]
          [?e :bookmark/user ?u]]
        (d/db conn))
+
 
   )

@@ -60,26 +60,16 @@
                   "Some bookmarks"
                   (first (get-in @stage ["kordano@topiq.es" r-id :state :branches "master"]))))
 
-  (<!? (-get-in store ["kordano@topiq.es" r-id :branches "Some bookmarks"]))
-
-  (get-in @stage ["kordano@topiq.es" r-id])
-
-  (defn load-key [id]
-    (<!? (-get-in store [id])))
 
   ;; this needs a moment, datomic has to be initialized
   (def conn (<!? (s/branch-value store mapped-eval
                                  (get-in @stage ["kordano@topiq.es" r-id])
                                  "Some bookmarks")))
 
-  (<!? (-assoc-in store ["schema"] (read-string (slurp "resources/schema.edn"))))
-
-  (<!? (-get-in store ["schema"]))
-
   (d/q '[:find ?e ?u ?t
          :where
          [?e :bookmark/title ?t]
-         [?e :bookmark/url ?u]]
+         [?e :bookmark/user ?u]]
        (d/db conn))
 
   )

@@ -26,7 +26,7 @@
   "Dispatch incoming requests"
   [{:keys [topic data]}]
   (case topic
-    :graph 42
+    :graph {:a 1 :b 2}
     :unrelated))
 
 
@@ -54,7 +54,10 @@
 
 
 (comment
-  (run-server (site #'handler) {:port 8091 :join? false})
+
+  (def stop-server (run-server (site #'handler) {:port 8091 :join? false}))
+
+  (stop-server)
 
   (def store (<!? (new-mem-store)))
 
@@ -87,8 +90,8 @@
   (<!? (s/transact stage ["kordano@topiq.es" r-id "master"]
                    [[(find-fn 'bookmarks->datoms)
                      {:title "turing"
-                       :url "turing.com"
-                       :user "kordano@topiq.es"}]]))
+                      :url "turing.com"
+                      :user "kordano@topiq.es"}]]))
 
   (<!? (s/commit! stage {"kordano@topiq.es" {r-id #{"master"}}}))
 
@@ -110,6 +113,31 @@
          [?e :bookmark/title ?t]
          [?e :bookmark/user ?u]]
        (d/db conn))
+
+
+  (let [{:keys [commits branches head]}
+        {:commits {10 #{}
+                   20 #{10}
+                   30 #{20}
+                   40 #{20}
+                   50 #{40}
+                   60 #{50 30}
+                   70 #{60}}
+         :branches {"master" 10
+                    "slave" 40}
+         :head 70}
+        inverted (->> commits
+                      (map (fn [[k v]]
+                             (if (empty? v)
+                               {:root k}
+                               (zipmap v (repeat (count v) k)))))
+                      (apply merge-with list))]
+    (loop [h heads
+           real-order {}]
+      (if (empty? (get commits h))
+        real-order
+
+        )))
 
 
   )

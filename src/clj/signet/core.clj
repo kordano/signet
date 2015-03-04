@@ -106,7 +106,7 @@
                                  (get-in @stage ["kordano@topiq.es" r-id])
                                  "Some bookmarks")))
 
-  (get-in @stage ["kordano@topiq.es" r-id :state :causal-order])
+  (get-in @stage ["kordano@topiq.es" r-id :state])
 
   (d/q '[:find ?e ?u ?t
          :where
@@ -115,29 +115,31 @@
        (d/db conn))
 
 
-  (let [{:keys [commits branches head]}
+  ;; commit graph to layout
+
+  (let [{:keys [commits branches head] :as g}
         {:commits {10 #{}
                    20 #{10}
                    30 #{20}
                    40 #{20}
                    50 #{40}
                    60 #{50 30}
-                   70 #{60}}
+                   70 #{60}
+                   80 {}
+                   90 #{80}}
          :branches {"master" 10
-                    "slave" 40}
-         :head 70}
+                    "fix" 40
+                    "dev" 30}
+         :heads #{70 90}}
         inverted (->> commits
                       (map (fn [[k v]]
                              (if (empty? v)
                                {:root k}
                                (zipmap v (repeat (count v) k)))))
                       (apply merge-with list))]
-    (loop [h heads
-           real-order {}]
-      (if (empty? (get commits h))
-        real-order
 
-        )))
+
+    )
 
 
   )

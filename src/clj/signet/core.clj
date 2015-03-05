@@ -47,9 +47,9 @@
 
 (defn -main [& args]
   (let [port (-> args first read-string)]
-    (info "Starting Server ...")
+    (info " - SERVER - Warming up...")
     (run-server (site #'handler) {:port (or port 8082) :join? false})
-    (info "done")
+    (info " - SERVER - started")
     (info  (str "Visit http://localhost:" (or port 8082)))))
 
 

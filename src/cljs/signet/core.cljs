@@ -38,9 +38,6 @@
       remove))
 
 
-(defn generate-positions [g]
-  [50 150 350])
-
 (defn compute-pos [w h cs]
   (let [c {40 {:branch "fix" :root false :head false
                :order [40 50] :bp 20 :mp 60}
@@ -81,8 +78,8 @@
 (defn draw-graph
   "doc-string"
   [graph-data frame]
-  (let [width 700
-        height 300
+  (let [width (* 0.4 (.-width js/screen))
+        height (* 0.5 (.-height js/screen))
         circle-size 10
         {:keys [nodes x-positions y-positions links]} (compute-pos width height circle-size)
         svg (.. d3

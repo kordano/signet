@@ -115,31 +115,60 @@
        (d/db conn))
 
 
-  ;; commit graph to layout
-
-  (let [{:keys [commits branches head] :as g}
-        {:commits {10 #{}
-                   20 #{10}
-                   30 #{20}
-                   40 #{20}
-                   50 #{40}
-                   60 #{50 30}
-                   70 #{60}
-                   80 {}
-                   90 #{80}}
-         :branches {"master" 10
-                    "fix" 40
-                    "dev" 30}
-         :heads #{70 90}}
-        inverted (->> commits
-                      (map (fn [[k v]]
-                             (if (empty? v)
-                               {:root k}
-                               (zipmap v (repeat (count v) k)))))
-                      (apply merge-with list))]
-
-
-    )
-
+  (def g {:commits {10 #{}
+                    20 #{10}
+                    30 #{20}
+                    40 #{20}
+                    50 #{40}
+                    60 #{50 30}
+                    70 #{60}
+                    80 #{30}
+                    90 #{80}
+                    100 #{}}
+          :branches {"master" 10
+                     "new" 100
+                     "fix" 40
+                     "dev" 80}
+          :heads #{70 90}})
 
   )
+
+
+
+
+
+
+
+#_(let [{:keys [commits branches heads]} g
+      id->branches (clojure.set/map-invert branches)
+      h-order (apply list heads)]
+  (loop [h h-order
+         mp {}
+         mn (list)   ;; merge nodes
+         next-node (peek h-order)
+         branch-order (list (peek h-order))
+         orders {}]
+    (if (empty? heads)
+      orders
+      (if (nil? next-node)
+        (recur (pop heads)
+               mp
+               mn
+               (if mp
+                 (peek mn)
+                 (peek (pop heads)))
+               (list (peek (pop heads)))
+               (assoc orders
+                 (id->branches (peek branch-order))
+                 {:order branch-order
+                  :mp nil
+                  :bp nil}))
+        (if (id->branches next-node)
+          (recur
+           (pop heads)
+           mp
+           mn
+           (if mp
+             (peak mn)
+             (peak (pop heads))))
+          )))))

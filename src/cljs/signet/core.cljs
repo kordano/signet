@@ -41,37 +41,76 @@
 (defn generate-positions [g]
   [50 150 350])
 
+(defn compute-pos [w h cs]
+  (let [c {40 {:branch "fix" :root false :head false
+               :order [40 50] :bp 20 :mp 60}
+           10 {:branch "master" :root true :head true
+               :order [10 20 30 60 70] :bp nil :mp nil}
+           80 {:branch "dev" :root false :head true
+               :order [80 90] :bp 30 :mp nil}}
+        y-order [40 10 80]]
+    (loop [x-order (list 10 40 80)
+           x-positions {}]
+      (if (empty? x-order)
+        (let [m (count y-order)
+              dy (/ (- h (* 2 cs)) m )]
+          {:nodes [10 20 30 40 50 60 70 80 90]
+           :links [[10 20] [20 30] [30 60] [60 70] [40 50] [80 90] [20 40] [50 60] [30 80]]
+           :x-positions x-positions
+           :y-positions (->> (range m)
+                             (map
+                              (fn [i]
+                                (->> (get-in c [(get y-order i) :order])
+                                     (map (fn [id] [id (+ cs (/ dy 2) (* i dy))]))
+                                     (into {}))) )
+                             (apply merge))})
+        (let [{:keys [order head root bp mp]} (get c (peek x-order))
+              n (count order)
+              start (or (get x-positions bp) cs)
+              end (or (get x-positions mp) (- w cs))
+              dx (/ (- end start) (if root
+                                    (if head (dec n) n)
+                                    (if head n (inc n))))
+              offset (if bp dx 0)
+              b-positions (->> (range n)
+                               (map (fn [i] [(get order i) (+ start offset (* i dx))]))
+                               (into {}))]
+          (recur (pop x-order) (merge x-positions b-positions)))))))
+
 
 (defn draw-graph
   "doc-string"
   [graph-data frame]
   (let [width 700
         height 300
+        circle-size 10
+        {:keys [nodes x-positions y-positions links]} (compute-pos width height circle-size)
         svg (.. d3
                 (select frame)
                 (append "svg")
                 (attr {:width width
-                       :height height}))
-        data-positions (generate-positions graph-data)
-        circle (.. svg
-                   (selectAll "circle")
-                   (data data-positions)
-                   enter
-                   (append "circle")
-                   (attr {:cx (fn [d] d)
-                          :cy (/ height 2)
-                          :fill "steelblue"
-                          :r 10}))
-        links (.. svg
-                  (selectAll "link")
-                  enter
-                  (append "line")
-                  (attr {:x1 50
-                         :x2 50
-                         :y1 (/ height 2)
-                         :y2 (/ height 2)
-                         }))]
-    links))
+                       :height height}))]
+    (do
+      (.. svg
+          (selectAll "link")
+          (data links)
+          enter
+          (append "line")
+          (attr {:x1 (fn [[v1 _]] (x-positions v1))
+                 :y1 (fn [[v1 _]] (y-positions v1))
+                 :x2 (fn [[_ v2]] (x-positions v2))
+                 :y2 (fn [[_ v2]] (y-positions v2))})
+          (style {:stroke-with 2
+                  :stroke "black"}))
+      (.. svg
+          (selectAll "circle")
+          (data nodes)
+          enter
+          (append "circle")
+          (attr {:cx (fn [d] (get x-positions d))
+                 :cy (fn [d] (get y-positions d))
+                 :fill "steelblue"
+                 :r circle-size})))))
 
 
 (defn commit-graph-view

@@ -97,8 +97,39 @@
 
   (<!? (s/branch! stage
                   ["kordano@topiq.es" r-id]
-                  "Some bookmarks"
+                  "bookmarks"
                   (first (get-in @stage ["kordano@topiq.es" r-id :state :branches "master"]))))
+
+
+  (<!? (s/checkout! stage ["kordano@topiq.es" r-id] "bookmarks"))
+
+
+  (<!? (s/transact stage ["kordano@topiq.es" r-id "bookmarks"]
+                   [[(find-fn 'bookmarks->datoms)
+                     {:title "test"
+                      :url "test.com"
+                      :user "kordano@topiq.es"}]]))
+
+  (<!? (s/commit! stage {"kordano@topiq.es" {r-id #{"bookmarks"}}}))
+
+  (<!? (s/checkout! stage ["kordano@topiq.es" r-id] "master"))
+
+  (<!? (s/transact stage ["kordano@topiq.es" r-id "master"]
+                   [[(find-fn 'bookmarks->datoms)
+                     {:title "turing"
+                      :url "turing.com"
+                      :user "kordano@topiq.es"}]]))
+
+  (<!? (s/commit! stage {"kordano@topiq.es" {r-id #{"master"}}}))
+
+
+  (<!? (s/merge! stage ["kordano@topiq.es" r-id "bookmarks"]
+                 (get-in @stage ["kordano@topiq.es" r-id :state :branches "bookmarks"])))
+
+
+  (<!? (s/commit! stage {"kordano@topiq.es" {r-id #{"master"}}}))
+
+  (aprint (get-in @stage ["kordano@topiq.es" r-id :state]))
 
 
   ;; this needs a moment, datomic has to be initialized
@@ -106,7 +137,6 @@
                                  (get-in @stage ["kordano@topiq.es" r-id])
                                  "Some bookmarks")))
 
-  (get-in @stage ["kordano@topiq.es" r-id :state])
 
   (d/q '[:find ?e ?u ?t
          :where
@@ -132,43 +162,3 @@
           :head #{70 90}})
 
   )
-
-
-
-
-
-
-
-#_(let [{:keys [commits branches heads]} g
-      id->branches (clojure.set/map-invert branches)
-      h-order (apply list heads)]
-  (loop [h h-order
-         mp {}
-         mn (list)   ;; merge nodes
-         next-node (peek h-order)
-         branch-order (list (peek h-order))
-         orders {}]
-    (if (empty? heads)
-      orders
-      (if (nil? next-node)
-        (recur (pop heads)
-               mp
-               mn
-               (if mp
-                 (peek mn)
-                 (peek (pop heads)))
-               (list (peek (pop heads)))
-               (assoc orders
-                 (id->branches (peek branch-order))
-                 {:order branch-order
-                  :mp nil
-                  :bp nil}))
-        (if (id->branches next-node)
-          (recur
-           (pop heads)
-           mp
-           mn
-           (if mp
-             (peak mn)
-             (peak (pop heads))))
-          )))))

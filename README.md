@@ -1,10 +1,21 @@
 # signet
 
-A Clojure library designed to ... well, that part is up to you.
+Commit graph visualization
 
 ## Usage
 
-FIXME
+Build it
+
+```
+lein cljsbuild once
+```
+
+Run it
+```
+lein run 8082
+```
+
+Visit <http://localhost:8082>
 
 ## License
 

@@ -46,11 +46,11 @@
 
 
 (defn -main [& args]
-  (info "Starting Server ...")
-  (run-server (site #'handler) {:port 8091 :join? false})
-  (info "done")
-  (info  "Visit http://localhost:8091"))
-
+  (let [port (-> args first read-string)]
+    (info "Starting Server ...")
+    (run-server (site #'handler) {:port (or port 8082) :join? false})
+    (info "done")
+    (info  (str "Visit http://localhost:" (or port 8082)))))
 
 
 (comment

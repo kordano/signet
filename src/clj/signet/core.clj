@@ -145,20 +145,29 @@
        (d/db conn))
 
 
-  (def g {:commits {10 #{}
-                    20 #{10}
-                    30 #{20}
-                    40 #{20}
-                    50 #{40}
-                    60 #{50 30}
-                    70 #{60}
-                    80 #{30}
-                    90 #{80}
-                    100 #{}}
-          :branches {"master" 10
-                     "new" 100
-                     "fix" 40
-                     "dev" 80}
-          :head #{70 90}})
 
   )
+
+(let [{:keys [causal-order branches]}
+        {:causal-order {10 []
+                        20 [10]
+                        30 [20]
+                        40 [20]
+                        50 [40]
+                        60 [30 50]
+                        70 [60]
+                        80 [30]
+                        90 [80]}
+         :branches {"master" 70
+                    "fix" 50
+                    "dev" 90}}
+        heads (into #{} (vals branches))]
+    (for [[k v] branches]
+      (loop [parents (get causal-order v)
+             order (list v)]
+        (if (empty? parents)
+          [k order]
+          (if (< 2 (count parents))
+            (recur (get causal-order (first parents)) (conj order (first parents)))
+            (let [next-node (first (remove heads parents))]
+              (recur (get causal-order next-node) (conj order next-node))))))))

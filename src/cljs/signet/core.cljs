@@ -44,15 +44,18 @@
            10 {:branch "master" :root true :head true
                :order [10 20 30 60 70] :bp nil :mp nil}
            80 {:branch "dev" :root false :head true
-               :order [80 90] :bp 30 :mp nil}}
-        y-order [40 10 80]]
-    (loop [x-order (list 10 40 80)
+               :order [80 90 ] :bp 30 :mp nil}
+           110 {:branch "dev" :root false :head true
+               :order [110 120] :bp 60 :mp nil}
+           }
+        y-order [40 110 10 80]]
+    (loop [x-order (list 10 40 80 110)
            x-positions {}]
       (if (empty? x-order)
         (let [m (count y-order)
               dy (/ (- h (* 2 cs)) m )]
-          {:nodes [10 20 30 40 50 60 70 80 90]
-           :links [[10 20] [20 30] [30 60] [60 70] [40 50] [80 90] [20 40] [50 60] [30 80]]
+          {:nodes [10 20 30 40 50 60 70 80 90 110 120]
+           :links [[10 20] [20 30] [30 60] [60 70] [40 50] [80 90] [20 40] [50 60] [30 80] [60 110] [110 120]]
            :x-positions x-positions
            :y-positions (->> (range m)
                              (map

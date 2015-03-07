@@ -53,6 +53,8 @@
     (info  (str "Visit http://localhost:" (or port 8082)))))
 
 
+
+
 (comment
 
   (def stop-server (run-server (site #'handler) {:port 8091 :join? false}))
@@ -148,28 +150,5 @@
 
 
 
-  )
 
-(let [{:keys [causal-order branches]}
-        {:causal-order {10 []
-                        20 [10]
-                        30 [20]
-                        40 [20]
-                        50 [40]
-                        60 [30 50]
-                        70 [60]
-                        80 [30]
-                        90 [80]}
-         :branches {"master" 70
-                    "fix" 50
-                    "dev" 90}}
-        heads (into #{} (vals branches))]
-    (for [[k v] branches]
-      (loop [parents (get causal-order v)
-             order (list v)]
-        (if (empty? parents)
-          [k order]
-          (if (< 2 (count parents))
-            (recur (get causal-order (first parents)) (conj order (first parents)))
-            (let [next-node (first (remove heads parents))]
-              (recur (get causal-order next-node) (conj order next-node))))))))
+  )

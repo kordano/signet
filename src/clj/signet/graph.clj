@@ -55,7 +55,7 @@
                       (conj result [b (branches->nodes c causal-order heads)])))))))
 
 (defn nodes->order
-  "doc-string"
+  "Calculate commit order in time"
   [{:keys [nodes causal-order branches] :as cg}]
   (let [new-nodes (map
                    (fn [[b b-nodes]]
@@ -69,22 +69,25 @@
       (->> new-nodes
            (map (fn [[k v]] [k (rest v)]))
            (into {}))
-      :branch-points
+      :branch-links
       (->> new-nodes
-           (map (fn [[k v]] [k (first v)]))
+           (map (fn [[k v]] [k (if (nil? (first v))
+                                nil
+                                (take 2 v))]))
            (into {})))))
 
 
-(defn find-merge-points [{:keys [causal-order branches] :as cg}]
+(defn find-merge-links [{:keys [causal-order branches] :as cg}]
   (let [branch-heads (into {} (map (fn [[k v]] [v k]) branches))]
-    (assoc cg
-      :merge-points
+    (update cg
+      :merge-links
       (->> causal-order
            (filter-map [key val] (> (count val) 1))
            (into {})
-           (map (fn [[k v]] (map (fn [b] [b k]) (remove nil? (map branch-heads v)))))
+           (map (fn [[k v]] (map (fn [b] [b [(branches b) k]]) (remove nil? (map branch-heads v)))))
            (apply concat)
            (into {})))))
+
 
 
 (comment
@@ -109,16 +112,10 @@
                 "dev" 120
                 "fix-2" 140}})
 
-
   (->> test-cg
        commit-graph->nodes
        distinct-nodes
        nodes->order
-       find-merge-points)
-
-
-
-
-
+       find-merge-links)
 
   )

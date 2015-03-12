@@ -3,13 +3,6 @@
             [aprint.core :refer [aprint]]))
 
 
-(defmacro filter-map [bindings pred m]
-  `(select-keys ~m
-                (for [~bindings ~m
-                      :when ~pred]
-                  ~(first bindings))))
-
-
 (defn branches->nodes [c causal-order heads]
   (loop [parents (get causal-order c)
          node c
@@ -80,8 +73,10 @@
 (defn find-merge-links [{:keys [causal-order branches] :as cg}]
   (let [branch-heads (into {} (map (fn [[k v]] [v k]) branches))]
     (assoc cg :merge-links
-      (->> causal-order
-           (filter-map [key val] (> (count val) 1))
+      (->> (select-keys causal-order
+                (for [[k v] causal-order
+                      :when (> (count v) 1)]
+                  k))
            (into {})
            (map (fn [[k v]] (map (fn [b] [b [(branches b) k]]) (remove nil? (map branch-heads v)))))
            (apply concat)
@@ -95,10 +90,21 @@
          (map
           (fn [[k v]]
             [k
-             (map
+             (mapv
               (fn [i]
                 [(get v i) (get v (inc i))])
               (range (count v)))])))))
+
+
+(defn explore-commit-graph
+  "Run the pipeline"
+  [cg]
+  (->> cg
+       commit-graph->nodes
+       distinct-nodes
+       nodes->order
+       find-merge-links
+       nodes->links))
 
 (comment
 
@@ -122,11 +128,7 @@
                 "dev" 120
                 "fix-2" 140}})
 
-  (->> test-cg
-       commit-graph->nodes
-       distinct-nodes
-       nodes->order
-       find-merge-links
-       nodes->links)
+
+  (explore-commit-graph test-cg)
 
   )

@@ -75,6 +75,16 @@
            (into {})))))
 
 
+(defn find-merge-points [{:keys [causal-order branches] :as cg}]
+  (let [branch-heads (into {} (map (fn [[k v]] [v k]) branches))]
+    (assoc cg
+      :merge-points
+      (->> causal-order
+           (filter-map [key val] (> (count val) 1))
+           (into {})
+           (map (fn [[k v]] (map (fn [b] [b k]) (remove nil? (map branch-heads v)))))
+           (apply concat)
+           (into {})))))
 
 
 (comment
@@ -89,23 +99,25 @@
                     70 [60]
                     80 [30]
                     90 [80]
-                    100 [70]
+                    100 [70 140]
                     110 [100]
-                    120 [90]}
+                    120 [90]
+                    130 [30]
+                    140 [130]}
      :branches {"master" 110
                 "fix" 50
-                "dev" 120}})
+                "dev" 120
+                "fix-2" 140}})
 
 
-  (let [{:keys [causal-order branches]} (->> test-cg
-                                             commit-graph->nodes
-                                             distinct-nodes
-                                             nodes->order)
-        branch-heads (into {} (map (fn [[k v]] [v k]) branches))]
-    (map
-     (fn [[k v]]
-       [k ()])
-     (filter-map [key val] (> (count val) 1) causal-order)))
+  (->> test-cg
+       commit-graph->nodes
+       distinct-nodes
+       nodes->order
+       find-merge-points)
+
+
+
 
 
 

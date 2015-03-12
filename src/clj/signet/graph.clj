@@ -79,8 +79,7 @@
 
 (defn find-merge-links [{:keys [causal-order branches] :as cg}]
   (let [branch-heads (into {} (map (fn [[k v]] [v k]) branches))]
-    (update cg
-      :merge-links
+    (update-in cg [:merge-links]
       (->> causal-order
            (filter-map [key val] (> (count val) 1))
            (into {})

@@ -67,19 +67,19 @@
     (assoc cg
       :nodes
       (->> new-nodes
-           (map (fn [[k v]] [k (rest v)]))
+           (map (fn [[k v]] [k (vec (rest v))]))
            (into {}))
       :branch-links
       (->> new-nodes
            (map (fn [[k v]] [k (if (nil? (first v))
                                 nil
-                                (take 2 v))]))
+                                (vec (take 2 v)))]))
            (into {})))))
 
 
 (defn find-merge-links [{:keys [causal-order branches] :as cg}]
   (let [branch-heads (into {} (map (fn [[k v]] [v k]) branches))]
-    (update-in cg [:merge-links]
+    (assoc cg :merge-links
       (->> causal-order
            (filter-map [key val] (> (count val) 1))
            (into {})
@@ -88,6 +88,17 @@
            (into {})))))
 
 
+(defn nodes->links [{:keys [nodes] :as cg}]
+  (assoc cg
+    :links
+    (->> nodes
+         (map
+          (fn [[k v]]
+            [k
+             (map
+              (fn [i]
+                [(get v i) (get v (inc i))])
+              (range (count v)))])))))
 
 (comment
 
@@ -115,6 +126,7 @@
        commit-graph->nodes
        distinct-nodes
        nodes->order
-       find-merge-links)
+       find-merge-links
+       nodes->links)
 
   )

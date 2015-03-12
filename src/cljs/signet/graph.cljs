@@ -1,7 +1,5 @@
 (ns signet.graph
-  (:require [clojure.set :refer [difference]]
-            [aprint.core :refer [aprint]]))
-
+  (:require [clojure.set :refer [difference]]))
 
 (defn branches->nodes [c causal-order heads]
   (loop [parents (get causal-order c)
@@ -106,30 +104,3 @@
        nodes->order
        find-merge-links
        nodes->links))
-
-(comment
-
-  (def test-cg
-    {:causal-order {10 []
-                    20 [10]
-                    30 [20]
-                    40 [20]
-                    50 [40]
-                    60 [30 50]
-                    70 [60]
-                    80 [30]
-                    90 [80]
-                    100 [70 140]
-                    110 [100]
-                    120 [90]
-                    130 [30]
-                    140 [130]}
-     :branches {"master" 110
-                "fix" 50
-                "dev" 120
-                "fix-2" 140}})
-
-
-  (aprint (explore-commit-graph test-cg))
-
-  )

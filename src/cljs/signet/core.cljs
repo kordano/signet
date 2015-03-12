@@ -1,6 +1,7 @@
 (ns signet.core
   (:require [strokes :refer [d3]]
             [cljs.core.async :refer [put! chan <! >! alts! timeout close!] :as async]
+            [signet.graph :refer [explore-commit-graph]]
             [chord.client :refer [ws-ch]]
             [om.core :as om :include-macros true]
             [om.dom :as dom]
@@ -16,6 +17,26 @@
 (strokes/bootstrap)
 
 (enable-console-print!)
+
+(def test-cg
+    {:causal-order {10 []
+                    20 [10]
+                    30 [20]
+                    40 [20]
+                    50 [40]
+                    60 [30 50]
+                    70 [60]
+                    80 [30]
+                    90 [80]
+                    100 [70 140]
+                    110 [100]
+                    120 [90]
+                    130 [30]
+                    140 [130]}
+     :branches {"master" 110
+                "fix" 50
+                "dev" 120
+                "fix-2" 140}})
 
 (def app-state
   (atom
@@ -141,7 +162,6 @@
             (println "Error")))))
     om/IRenderState
     (render-state [app this]
-      (println (pr-str app))
       (dom/h1 nil (:text app)))))
 
 
@@ -149,3 +169,6 @@
  commit-graph-view
  app-state
  {:target (. js/document (getElementById "center-container"))})
+
+
+(println (explore-commit-graph test-cg))

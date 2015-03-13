@@ -130,7 +130,11 @@
       (if (empty? x-order)
         (assoc icg
           :nodes (apply concat (vals (:nodes icg)))
-          :links (remove #(-> % second nil?) (apply concat (vals (:links icg))))
+          :links (remove
+                  #(or (nil? %) (-> % second nil?))
+                  (concat (apply concat (vals (:links icg)))
+                          (vals (:branch-links icg))
+                          (vals (:merge-links icg))))
           :x-positions x-positions
           :y-positions (let [m (count (:y-order icg))
                              dy (/ (- h (* 2 cs)) m )]

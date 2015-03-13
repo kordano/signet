@@ -59,6 +59,26 @@
       remove))
 
 
+(defn compute-positions
+  "Compute positions using widht, height, circle size and improved commit graph"
+  [w h cs icg]
+  (let [eos (- w cs)]
+      (loop [x-order (:x-order icg)
+             x-positions {}]
+        (if (empty? x-order)
+          (assoc icg :x-positions x-positions)
+          (recur (rest x-order)
+                 (let [branch (first x-order)
+                       nodes (get-in icg [:nodes branch])
+                       n (count nodes)
+
+                       start (or (first (get-in icg [:branch-links branch])) 0)
+                       end (or (first (get-in icg [:merge-links branch])) eos)
+                       dx (/ (- end start) (if (= 0 start)
+                                             (if (= ))
+                                             (dec n) n))]))))))
+
+
 (defn compute-pos [w h cs]
   (let [c {40 {:branch "fix" :root false :head false
                :order [40 50] :bp 20 :mp 60}

@@ -1,7 +1,7 @@
 (ns signet.core
   (:require [strokes :refer [d3]]
             [cljs.core.async :refer [put! chan <! >! alts! timeout close!] :as async]
-            [signet.graph :refer [explore-commit-graph]]
+            [signet.graph :refer [compute-positions]]
             [chord.client :refer [ws-ch]]
             [om.core :as om :include-macros true]
             [om.dom :as dom]
@@ -50,40 +50,6 @@
       (select "svg")
       remove))
 
-(defn compute-positions
-  "Compute positions using widht, height, circle size and improved commit graph"
-  [w h cs icg]
-  (let [eos (- w cs)]
-    (loop [x-order (:x-order icg)
-           x-positions {}]
-      (println "Calculating " (first x-order))
-      (if (empty? x-order)
-        (assoc icg
-          :nodes (apply concat (vals (:nodes icg)))
-          :links (apply concat (vals (:links icg)))
-          :x-positions x-positions
-          :y-positions (let [m (count (:y-order icg))
-                             dy (/ (- h (* 2 cs)) m )]
-                         (->> (range m)
-                              (map
-                               (fn [i]
-                                 (->> (get-in icg [:nodes (get (:y-order icg) i)])
-                                      (map (fn [id] [id (+ cs (/ dy 2) (* i dy))]))
-                                      (into {}))))
-                              (apply merge))))
-        (let [branch (first x-order)
-              nodes (get-in icg [:nodes branch])
-              n (count nodes)
-              start (or (first (get-in icg [:branch-links branch])) 0)
-              end (or (first (get-in icg [:merge-links branch])) eos)
-              dx (/ (- end start) (if (= start 0)
-                                    (if (= end eos) (dec n) n)
-                                    (if (= end eos) n (inc n))))
-              offset (if (= start 0) 0 dx)
-              branch-positions (->> (range n)
-                                    (map (fn [i] [(get nodes i) (+ start offset (* i dx))]))
-                                    (into {}))]
-          (recur (rest x-order) (merge x-positions branch-positions)))))))
 
 (defn draw-graph
   "doc-string"
@@ -91,8 +57,8 @@
   (let [width (* 0.4 (.-width js/screen))
         height (* 0.5 (.-height js/screen))
         circle-size 10
-        icg (explore-commit-graph test-cg)
-        {:keys [nodes x-positions y-positions links]} (compute-positions width height circle-size icg)
+        {:keys [nodes x-positions y-positions links]}
+        (compute-positions width height circle-size test-cg)
         svg (.. d3
                 (select frame)
                 (append "svg")

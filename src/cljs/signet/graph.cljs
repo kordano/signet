@@ -94,6 +94,19 @@
               (range (count v)))]))
          (into {}))))
 
+(defn nodes->x-y-order [{:keys [nodes] :as cg}]
+  (let [x-order (mapv first (sort-by val #(> (count %1) (count %2)) nodes))]
+    (assoc cg
+      :x-order x-order
+      :y-order (vec (loop [order x-order
+                           y-order []
+                           i true]
+                      (if (empty? order)
+                        y-order
+                        (recur (rest order) (if i
+                                              (concat y-order [(first order)])
+                                              (concat [(first order)] y-order))
+                               (not i))))))))
 
 (defn explore-commit-graph
   "Run the pipeline"
@@ -103,4 +116,5 @@
        distinct-nodes
        nodes->order
        find-merge-links
-       nodes->links))
+       nodes->links
+       nodes->x-y-order))

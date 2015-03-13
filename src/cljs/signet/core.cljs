@@ -19,36 +19,28 @@
 (enable-console-print!)
 
 (def test-cg
-    {:causal-order {10 []
-                    20 [10]
-                    30 [20]
-                    40 [20]
-                    50 [40]
-                    60 [30 50]
-                    70 [60]
-                    80 [30]
-                    90 [80]
-                    100 [70 140]
-                    110 [100]
-                    120 [90]
-                    130 [30]
-                    140 [130]}
-     :branches {"master" 110
-                "fix" 50
-                "dev" 120
-                "fix-2" 140}})
+  {:causal-order {10 []
+                  20 [10]
+                  30 [20]
+                  40 [20]
+                  50 [40]
+                  60 [30 50]
+                  70 [60]
+                  80 [30]
+                  90 [80]
+                  100 [70 140]
+                  110 [100]
+                  120 [90]
+                  130 [30]
+                  140 [130]}
+   :branches {"master" 110
+              "fix" 50
+              "dev" 120
+              "fix-2" 140}})
 
 (def app-state
   (atom
-   {:graph-data {:commits {10 #{}
-                           20 #{10}
-                           30 #{20}
-                           40 #{20}
-                           50 #{40}
-                           60 #{50 30}
-                           70 #{60}}
-                 :branches {"master" 10
-                            "slave" 40}}
+   {:graph-data [1 2 3]
     :text "commit graph"}))
 
 
@@ -58,66 +50,40 @@
       (select "svg")
       remove))
 
-
 (defn compute-positions
   "Compute positions using widht, height, circle size and improved commit graph"
   [w h cs icg]
   (let [eos (- w cs)]
-      (loop [x-order (:x-order icg)
-             x-positions {}]
-        (if (empty? x-order)
-          (assoc icg :x-positions x-positions)
-          (recur (rest x-order)
-                 (let [branch (first x-order)
-                       nodes (get-in icg [:nodes branch])
-                       n (count nodes)
-
-                       start (or (first (get-in icg [:branch-links branch])) 0)
-                       end (or (first (get-in icg [:merge-links branch])) eos)
-                       dx (/ (- end start) (if (= 0 start)
-                                             (if (= ))
-                                             (dec n) n))]))))))
-
-
-(defn compute-pos [w h cs]
-  (let [c {40 {:branch "fix" :root false :head false
-               :order [40 50] :bp 20 :mp 60}
-           10 {:branch "master" :root true :head true
-               :order [10 20 30 60 70] :bp nil :mp nil}
-           80 {:branch "dev" :root false :head true
-               :order [80 90 ] :bp 30 :mp nil}
-           110 {:branch "dev" :root false :head true
-               :order [110 120] :bp 60 :mp nil}
-           }
-        y-order [40 110 10 80]]
-    (loop [x-order (list 10 40 80 110)
+    (loop [x-order (:x-order icg)
            x-positions {}]
+      (println "Calculating " (first x-order))
       (if (empty? x-order)
-        (let [m (count y-order)
-              dy (/ (- h (* 2 cs)) m )]
-          {:nodes [10 20 30 40 50 60 70 80 90 110 120]
-           :links [[10 20] [20 30] [30 60] [60 70] [40 50] [80 90] [20 40] [50 60] [30 80] [60 110] [110 120]]
-           :x-positions x-positions
-           :y-positions (->> (range m)
-                             (map
-                              (fn [i]
-                                (->> (get-in c [(get y-order i) :order])
-                                     (map (fn [id] [id (+ cs (/ dy 2) (* i dy))]))
-                                     (into {}))) )
-                             (apply merge))})
-        (let [{:keys [order head root bp mp]} (get c (peek x-order))
-              n (count order)
-              start (or (get x-positions bp) cs)
-              end (or (get x-positions mp) (- w cs))
-              dx (/ (- end start) (if root
-                                    (if head (dec n) n)
-                                    (if head n (inc n))))
-              offset (if bp dx 0)
-              b-positions (->> (range n)
-                               (map (fn [i] [(get order i) (+ start offset (* i dx))]))
-                               (into {}))]
-          (recur (pop x-order) (merge x-positions b-positions)))))))
-
+        (assoc icg
+          :nodes (apply concat (vals (:nodes icg)))
+          :links (apply concat (vals (:links icg)))
+          :x-positions x-positions
+          :y-positions (let [m (count (:y-order icg))
+                             dy (/ (- h (* 2 cs)) m )]
+                         (->> (range m)
+                              (map
+                               (fn [i]
+                                 (->> (get-in icg [:nodes (get (:y-order icg) i)])
+                                      (map (fn [id] [id (+ cs (/ dy 2) (* i dy))]))
+                                      (into {}))))
+                              (apply merge))))
+        (let [branch (first x-order)
+              nodes (get-in icg [:nodes branch])
+              n (count nodes)
+              start (or (first (get-in icg [:branch-links branch])) 0)
+              end (or (first (get-in icg [:merge-links branch])) eos)
+              dx (/ (- end start) (if (= start 0)
+                                    (if (= end eos) (dec n) n)
+                                    (if (= end eos) n (inc n))))
+              offset (if (= start 0) 0 dx)
+              branch-positions (->> (range n)
+                                    (map (fn [i] [(get nodes i) (+ start offset (* i dx))]))
+                                    (into {}))]
+          (recur (rest x-order) (merge x-positions branch-positions)))))))
 
 (defn draw-graph
   "doc-string"
@@ -125,7 +91,8 @@
   (let [width (* 0.4 (.-width js/screen))
         height (* 0.5 (.-height js/screen))
         circle-size 10
-        {:keys [nodes x-positions y-positions links]} (compute-pos width height circle-size)
+        icg (explore-commit-graph test-cg)
+        {:keys [nodes x-positions y-positions links]} (compute-positions width height circle-size icg)
         svg (.. d3
                 (select frame)
                 (append "svg")
@@ -175,7 +142,7 @@
                   (do (om/transact! app :graph-data (fn [old] old))
                       (go
                         (clear-canvas "#graph-container")
-                        (draw-graph [50 100 150] "#graph-container"))
+                        (draw-graph [1 2 3]  "#graph-container"))
                       (if-let [new-msg (<! ws-channel)]
                         (recur new-msg)))
                   (println "Error: " (pr-str err)))))
@@ -189,6 +156,3 @@
  commit-graph-view
  app-state
  {:target (. js/document (getElementById "center-container"))})
-
-
-(println (explore-commit-graph test-cg))

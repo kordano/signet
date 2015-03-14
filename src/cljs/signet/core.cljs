@@ -57,13 +57,19 @@
   (let [width (* 0.4 (.-width js/screen))
         height (* 0.5 (.-height js/screen))
         circle-size 10
-        {:keys [nodes x-positions y-positions links]}
+        {:keys [nodes x-positions y-positions links branches]}
         (compute-positions width height circle-size test-cg)
         svg (.. d3
                 (select frame)
                 (append "svg")
                 (attr {:width width
-                       :height height}))]
+                       :height height}))
+        tooltip (.. d3
+                    (select "body")
+                    (append "div")
+                    (style {:position "absolute"
+                            :z-index 10
+                            :visibility "visisble"}))]
     (do
       (.. svg
           (selectAll "link")
@@ -83,8 +89,21 @@
           (append "circle")
           (attr {:cx (fn [d] (get x-positions d))
                  :cy (fn [d] (get y-positions d))
-                 :fill "steelblue"
-                 :r circle-size})))))
+                 :fill (fn [d] (if (contains? (into #{} (vals branches)) d)
+                                "red"
+                                "steelblue"))
+                 :r circle-size})
+          (on "mouseover" (fn [d] (do (.. tooltip
+                                         (style {:visiblity "visible"
+                                                 :top (str (- (get y-positions d) 10) "px")
+                                                 :left (str  (+ (get x-positions d) 50)  "px")
+                                                 })
+                                         (text d)))))
+          (on "mouseout" (fn [d] (.. tooltip
+                                    (style {:visiblity "hidden"})
+                                    (text ""))))
+          #_(append "svg:title") #_(text (fn [d] d))
+          ))))
 
 
 (defn commit-graph-view

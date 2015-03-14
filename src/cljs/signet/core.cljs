@@ -69,7 +69,8 @@
                     (append "div")
                     (style {:position "absolute"
                             :z-index 10
-                            :visibility "visisble"}))]
+                            :visibility "hidden"
+                            :color "black"}))]
     (do
       (.. svg
           (selectAll "link")
@@ -93,17 +94,11 @@
                                 "red"
                                 "steelblue"))
                  :r circle-size})
-          (on "mouseover" (fn [d] (do (.. tooltip
-                                         (style {:visiblity "visible"
-                                                 :top (str (- (get y-positions d) 10) "px")
-                                                 :left (str  (+ (get x-positions d) 50)  "px")
-                                                 })
-                                         (text d)))))
-          (on "mouseout" (fn [d] (.. tooltip
-                                    (style {:visiblity "hidden"})
-                                    (text ""))))
-          #_(append "svg:title") #_(text (fn [d] d))
-          ))))
+          (on "click" (fn [d] (do (.. tooltip
+                                     (style {:top (str (- (get y-positions d) 15) "px")
+                                             :left (str  (+ (get x-positions d) 50)  "px")
+                                             :visibility "visible"})
+                                     (text d)))))))))
 
 
 (defn commit-graph-view

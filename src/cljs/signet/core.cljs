@@ -64,12 +64,11 @@
                 (append "svg")
                 (attr {:width width
                        :height height}))
-        tooltip (.. d3
-                    (select "body")
-                    (append "div")
-                    (style {:position "absolute"
-                            :z-index 10
-                            :visibility "hidden"
+        tooltip (.. svg
+                    (append "text")
+                    (style {:visibility "hidden"
+                            :position "absolute"
+                            :text-anchor "middle"
                             :color "black"}))]
     (do
       (.. svg
@@ -95,9 +94,9 @@
                                 "steelblue"))
                  :r circle-size})
           (on "click" (fn [d] (do (.. tooltip
-                                     (style {:top (str (- (get y-positions d) 15) "px")
-                                             :left (str  (+ (get x-positions d) 50)  "px")
-                                             :visibility "visible"})
+                                     (style {:visibility "visible"})
+                                     (attr {:y (- (get y-positions d) 15)
+                                            :x (get x-positions d)})
                                      (text d)))))))))
 
 

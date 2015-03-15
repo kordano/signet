@@ -93,11 +93,17 @@
                                 "red"
                                 "steelblue"))
                  :r circle-size})
-          (on "click" (fn [d] (do (.. tooltip
+          (on "mouseover" (fn [d] (do (.. tooltip
                                      (style {:visibility "visible"})
                                      (attr {:y (- (get y-positions d) 15)
                                             :x (get x-positions d)})
-                                     (text d)))))))))
+                                     (text d)))))
+          (on "mouseout" (fn [d] (do (.. tooltip
+                                     (style {:visibility "hidden"})
+                                     (attr {:y (- (get y-positions d) 15)
+                                            :x (get x-positions d)})
+                                     (text d)))))
+          ))))
 
 
 (defn commit-graph-view

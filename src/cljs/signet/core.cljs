@@ -14,6 +14,9 @@
 
 (.log js/console "Kneel before Kordano!")
 
+
+(def uri (goog.Uri. js/location.href))
+
 (strokes/bootstrap)
 
 (enable-console-print!)
@@ -117,7 +120,7 @@
     om/IWillMount
     (will-mount [_]
       (go
-        (let [{:keys [ws-channel error] :as ws-conn} (<! (ws-ch "ws://localhost:8091/data/ws"))]
+        (let [{:keys [ws-channel error] :as ws-conn} (<! (ws-ch (str "ws://localhost:" (.getPort uri) "/data/ws")))]
           (if-not error
             (do
               (om/set-state! owner :ws-ch ws-channel)

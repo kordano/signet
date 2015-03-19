@@ -128,7 +128,40 @@
 
 
 
-
+(defn compute-positions
+  "Compute positions using widht, height, circle size and improved commit graph"
+  [w h cs icg]
+  (let [eos (- w cs)]
+    (loop [x-order (:x-order icg)
+           x-positions {}]
+      (if (empty? x-order)
+        (assoc icg
+          :nodes (apply concat (vals (:nodes icg)))
+          :links (apply concat (vals (:links icg)))
+          :x-positions x-positions
+          :y-positions (let [m (count (:y-order icg))
+                             dy (/ (- h (* 2 cs)) m )]
+                         (->> (range m)
+                              (map
+                               (fn [i]
+                                 (->> (get-in icg [:nodes (get (:y-order icg) i)])
+                                      (map (fn [id] [id (+ cs (/ dy 2) (* i dy))]))
+                                      (into {}))))
+                              (apply merge))))
+        (let [branch (first x-order)
+              nodes (get-in icg [:nodes branch])
+              n (count nodes)
+              start (or (get x-positions (first (get-in icg [:branch-links branch]))) cs)
+              end (or (get x-positions (first (get-in icg [:merge-links branch]))) eos)
+              dx (/ (- end start) (if (= start 0)
+                                    (if (= end eos) (dec n) n)
+                                    (if (= end eos) n (inc n))))
+              offset (if (= start 0) 0 dx)
+              branch-positions (->> (range n)
+                                    (map (fn [i] [(get nodes i) (+ start offset (* i dx))]))
+                                    (into {}))]
+          (aprint [start end dx offset])
+          (recur (rest x-order) (merge x-positions branch-positions)))))))
 
 
 (comment
@@ -153,7 +186,10 @@
                 "dev" 120
                 "fix-2" 140}})
 
+  ;; gorilla repl, how? why? when?
 
-  (aprint (compute-positions 1920 1080 50 (explore-commit-graph test-cg)))
+  (->> test-cg explore-commit-graph
+       (compute-positions 1920 1080 50)
+       aprint)
 
   )

@@ -158,3 +158,73 @@
                                     (map (fn [i] [(get nodes i) (+ start offset (* i dx))]))
                                     (into {}))]
           (recur (rest x-order) (merge x-positions branch-positions)))))))
+
+
+
+(defn clear-canvas [container]
+  (.. d3
+      (select container)
+      (select "svg")
+      remove))
+
+
+(defn render-graph
+  "Render the commit graph using d3"
+  [graph-data container]
+  (let [width (* 0.4 (.-width js/screen))
+        height (* 0.5 (.-height js/screen))
+        circle-size 10
+        {:keys [nodes x-positions y-positions links branches]}
+        (compute-positions width height circle-size graph-data)
+        svg (.. d3
+                (select container)
+                (append "svg")
+                (attr {:width width
+                       :height height}))
+        tooltip (.. svg
+                    (append "text")
+                    (style {:visibility "hidden"
+                            :position "absolute"
+                            :text-anchor "middle"
+                            :color "black"}))]
+    (do
+      (.. svg
+          (selectAll "link")
+          (data links)
+          enter
+          (append "line")
+          (attr {:x1 (fn [[v1 _]] (x-positions v1))
+                 :y1 (fn [[v1 _]] (y-positions v1))
+                 :x2 (fn [[_ v2]] (x-positions v2))
+                 :y2 (fn [[_ v2]] (y-positions v2))})
+          (style {:stroke-with 2
+                  :stroke "black"}))
+      (.. svg
+          (selectAll "circle")
+          (data nodes)
+          enter
+          (append "circle")
+          (attr {:cx (fn [d] (get x-positions d))
+                 :cy (fn [d] (get y-positions d))
+                 :fill (fn [d] (if (contains? (into #{} (vals branches)) d)
+                                "red"
+                                "steelblue"))
+                 :r circle-size})
+          (on "mouseover" (fn [d] (do (.. tooltip
+                                     (style {:visibility "visible"})
+                                     (attr {:y (- (get y-positions d) 15)
+                                            :x (get x-positions d)})
+                                     (text d)))))
+          (on "mouseout" (fn [d] (do (.. tooltip
+                                     (style {:visibility "hidden"})
+                                     (attr {:y (- (get y-positions d) 15)
+                                            :x (get x-positions d)})
+                                     (text d)))))))))
+
+
+
+
+(defn ^:export renderGraph
+  [data container]
+  (let [cg (read-string data)]
+    (render-graph cg container)))

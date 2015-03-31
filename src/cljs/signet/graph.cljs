@@ -222,8 +222,6 @@
                                      (text d)))))))))
 
 
-
-
 (defn ^:export renderGraph
   [data container]
   (let [cg (read-string data)]
